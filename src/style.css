@@ -26,9 +26,9 @@ body {
   margin: 0;
   display: flex;
   place-items: center;
-  justify-content: center; /* Center elements vertically */
-  align-items: center; /* Center elements horizontally */
-  flex-direction: column; /* Arrange items in a column */
+  justify-content: center; 
+  align-items: center; 
+  flex-direction: column; 
   min-width: 320px;
   min-height: 100vh;
 }
