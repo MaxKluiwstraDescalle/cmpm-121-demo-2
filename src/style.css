@@ -26,6 +26,9 @@ body {
   margin: 0;
   display: flex;
   place-items: center;
+  justify-content: center; /* Center elements vertically */
+  align-items: center; /* Center elements horizontally */
+  flex-direction: column; /* Arrange items in a column */
   min-width: 320px;
   min-height: 100vh;
 }
@@ -33,6 +36,12 @@ body {
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+  margin: 0; 
+  padding-bottom: 1rem; 
+  position: absolute; 
+  top: 30px; 
+  left: 50%; 
+  transform: translateX(-50%); 
 }
 
 #app {
@@ -92,4 +101,23 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+html, body {
+  height:100%;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+#drawingCanvas{
+  position: absolute;
+  border: 3px solid black;
+  width: 256px;
+  height: 256px;
+  display: block;
+  justify-content: center;
+  align-items: center;
+  background-color: white;
+  border-radius: 15px; 
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); 
 }
