@@ -21,7 +21,7 @@ if (!context) {
     throw new Error('Unable to get 2D context');
 }
 
-// Event listeners for drawing
+
 canvas.addEventListener('mousedown', startDrawing);
 canvas.addEventListener('mousemove', draw);
 canvas.addEventListener('mouseup', stopDrawing);
