@@ -110,14 +110,16 @@ html, body {
   align-items: center;
 }
 #drawingCanvas{
-  position: absolute;
+  /*position: absolute;*/
   border: 3px solid black;
   width: 256px;
   height: 256px;
   display: block;
-  justify-content: center;
-  align-items: center;
   background-color: white;
   border-radius: 15px; 
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); 
+}
+
+#clearButton{
+  margin-top: 10px;
 }
