@@ -19,19 +19,29 @@ const clearButton = document.createElement('button');
 clearButton.innerText = 'Clear';
 clearButton.id = 'clearButton';
 
+const undoButton = document.createElement('button');
+undoButton.innerText = 'Undo';
+undoButton.id = 'undoButton';
+
+const redoButton = document.createElement('button');
+redoButton.innerText = 'Redo';
+redoButton.id = 'redoButton';
+
 container.appendChild(canvas);
 container.appendChild(clearButton);
+container.appendChild(undoButton);
+container.appendChild(redoButton);
 document.body.appendChild(container);
 
 let isDrawing = false;
 let points: { x: number, y: number }[][] = [];
 let currentLine: { x: number, y: number }[] = [];
+let redoStack: { x: number, y: number }[][] = [];
 
 const context = canvas.getContext('2d')!;
 if (!context) {
     throw new Error('Unable to get 2D context');
 }
-
 
 canvas.addEventListener('mousedown', startDrawing);
 canvas.addEventListener('mousemove', draw);
@@ -52,6 +62,7 @@ function draw(event: MouseEvent) {
 function stopDrawing() {
     if (isDrawing) {
         points.push(currentLine);
+        currentLine = []; 
         isDrawing = false;
         canvas.dispatchEvent(new Event('drawing-changed'));
     }
@@ -71,7 +82,7 @@ function getMousePosition(event: MouseEvent) {
     };
 }
 
-
+// Observer for "drawing-changed" event
 canvas.addEventListener('drawing-changed', () => {
     context.clearRect(0, 0, canvas.width, canvas.height);
     points.forEach(line => {
@@ -85,7 +96,6 @@ canvas.addEventListener('drawing-changed', () => {
         });
         context.stroke();
     });
-  
     if (currentLine.length > 0) {
         context.beginPath();
         currentLine.forEach((point, index) => {
@@ -102,5 +112,30 @@ canvas.addEventListener('drawing-changed', () => {
 
 clearButton.addEventListener('click', () => {
     points = [];
+    currentLine = []; 
+    redoStack = [];
     context.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.dispatchEvent(new Event('drawing-changed'));
+});
+
+
+undoButton.addEventListener('click', () => {
+    if (points.length > 0) {
+        const lastLine = points.pop();
+        if (lastLine) {
+            redoStack.push(lastLine);
+        }
+        canvas.dispatchEvent(new Event('drawing-changed'));
+    }
+});
+
+
+redoButton.addEventListener('click', () => {
+    if (redoStack.length > 0) {
+        const lastLine = redoStack.pop();
+        if (lastLine) {
+            points.push(lastLine);
+        }
+        canvas.dispatchEvent(new Event('drawing-changed'));
+    }
 });
