@@ -33,6 +33,8 @@ container.appendChild(undoButton);
 container.appendChild(redoButton);
 document.body.appendChild(container);
 
+//=========================================================//
+
 let isDrawing = false;
 let points: { x: number, y: number }[][] = [];
 let currentLine: { x: number, y: number }[] = [];
@@ -47,6 +49,8 @@ canvas.addEventListener('mousedown', startDrawing);
 canvas.addEventListener('mousemove', draw);
 canvas.addEventListener('mouseup', stopDrawing);
 canvas.addEventListener('mouseout', stopDrawing);
+
+//=========================================================//
 
 function startDrawing(event: MouseEvent) {
     isDrawing = true;
@@ -68,6 +72,8 @@ function stopDrawing() {
     }
 }
 
+//=========================================================//
+
 function addPoint(event: MouseEvent) {
     const { offsetX, offsetY } = getMousePosition(event);
     currentLine.push({ x: offsetX, y: offsetY });
@@ -82,7 +88,7 @@ function getMousePosition(event: MouseEvent) {
     };
 }
 
-// Observer for "drawing-changed" event
+//=========================================================//
 canvas.addEventListener('drawing-changed', () => {
     context.clearRect(0, 0, canvas.width, canvas.height);
     points.forEach(line => {
@@ -109,6 +115,7 @@ canvas.addEventListener('drawing-changed', () => {
     }
 });
 
+//=========================================================//
 
 clearButton.addEventListener('click', () => {
     points = [];
@@ -128,7 +135,6 @@ undoButton.addEventListener('click', () => {
         canvas.dispatchEvent(new Event('drawing-changed'));
     }
 });
-
 
 redoButton.addEventListener('click', () => {
     if (redoStack.length > 0) {
