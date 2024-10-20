@@ -27,6 +27,13 @@ const redoButton = document.createElement('button');
 redoButton.innerText = 'Redo';
 redoButton.id = 'redoButton';
 
+const context = canvas.getContext('2d')!;
+if (!context) {
+    throw new Error('Unable to get 2D context');
+}
+
+//=========================================================//
+
 container.appendChild(canvas);
 container.appendChild(clearButton);
 container.appendChild(undoButton);
@@ -35,15 +42,36 @@ document.body.appendChild(container);
 
 //=========================================================//
 
-let isDrawing = false;
-let points: { x: number, y: number }[][] = [];
-let currentLine: { x: number, y: number }[] = [];
-let redoStack: { x: number, y: number }[][] = [];
+class MarkerLine {
+    private points: { x: number, y: number }[] = [];
 
-const context = canvas.getContext('2d')!;
-if (!context) {
-    throw new Error('Unable to get 2D context');
+    constructor(x: number, y: number) {
+        this.points.push({ x, y });
+    }
+
+    drag(x: number, y: number) {
+        this.points.push({ x, y });
+    }
+
+    display(context: CanvasRenderingContext2D) {
+        if (this.points.length < 2) return;
+        context.beginPath();
+        context.moveTo(this.points[0].x, this.points[0].y);
+        for (let i = 1; i < this.points.length; i++) {
+            context.lineTo(this.points[i].x, this.points[i].y);
+        }
+        context.stroke();
+    }
 }
+
+//=========================================================//
+
+let isDrawing = false;
+let points: MarkerLine[] = [];
+let currentLine: MarkerLine | null = null;
+let redoStack: MarkerLine[] = [];
+
+//=========================================================//
 
 canvas.addEventListener('mousedown', startDrawing);
 canvas.addEventListener('mousemove', draw);
@@ -54,30 +82,24 @@ canvas.addEventListener('mouseout', stopDrawing);
 
 function startDrawing(event: MouseEvent) {
     isDrawing = true;
-    currentLine = [];
-    addPoint(event);
+    const { offsetX, offsetY } = getMousePosition(event);
+    currentLine = new MarkerLine(offsetX, offsetY);
+    points.push(currentLine);
 }
 
 function draw(event: MouseEvent) {
-    if (!isDrawing) return;
-    addPoint(event);
+    if (!isDrawing || !currentLine) return;
+    const { offsetX, offsetY } = getMousePosition(event);
+    currentLine.drag(offsetX, offsetY);
+    canvas.dispatchEvent(new Event('drawing-changed'));
 }
 
 function stopDrawing() {
     if (isDrawing) {
-        points.push(currentLine);
-        currentLine = []; 
         isDrawing = false;
+        currentLine = null;
         canvas.dispatchEvent(new Event('drawing-changed'));
     }
-}
-
-//=========================================================//
-
-function addPoint(event: MouseEvent) {
-    const { offsetX, offsetY } = getMousePosition(event);
-    currentLine.push({ x: offsetX, y: offsetY });
-    canvas.dispatchEvent(new Event('drawing-changed'));
 }
 
 function getMousePosition(event: MouseEvent) {
@@ -89,37 +111,15 @@ function getMousePosition(event: MouseEvent) {
 }
 
 //=========================================================//
+
 canvas.addEventListener('drawing-changed', () => {
     context.clearRect(0, 0, canvas.width, canvas.height);
-    points.forEach(line => {
-        context.beginPath();
-        line.forEach((point, index) => {
-            if (index === 0) {
-                context.moveTo(point.x, point.y);
-            } else {
-                context.lineTo(point.x, point.y);
-            }
-        });
-        context.stroke();
-    });
-    if (currentLine.length > 0) {
-        context.beginPath();
-        currentLine.forEach((point, index) => {
-            if (index === 0) {
-                context.moveTo(point.x, point.y);
-            } else {
-                context.lineTo(point.x, point.y);
-            }
-        });
-        context.stroke();
-    }
+    points.forEach(line => line.display(context));
 });
 
-//=========================================================//
 
 clearButton.addEventListener('click', () => {
     points = [];
-    currentLine = []; 
     redoStack = [];
     context.clearRect(0, 0, canvas.width, canvas.height);
     canvas.dispatchEvent(new Event('drawing-changed'));
