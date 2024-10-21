@@ -38,46 +38,47 @@ const thickButton = document.createElement('button');
 thickButton.innerText = 'Thick';
 thickButton.id = 'thickButton';
 
-const context = canvas.getContext('2d')!;
-if (!context) {
-    throw new Error('Unable to get 2D context');
-}
-
-//=========================================================//
+//=======================================================//
 
 buttonContainer.appendChild(clearButton);
 buttonContainer.appendChild(undoButton);
 buttonContainer.appendChild(redoButton);
 buttonContainer.appendChild(thinButton);
 buttonContainer.appendChild(thickButton);
+
 container.appendChild(canvas);
 container.appendChild(buttonContainer);
 document.body.appendChild(container);
 
-//=========================================================//
+//=======================================================//
 
 let isDrawing = false;
 let points: MarkerLine[] = [];
 let currentLine: MarkerLine | null = null;
 let redoStack: MarkerLine[] = [];
-let currentThickness = 1; // Default thickness
+let currentThickness = 1; 
+let toolPreview: ToolPreview | null = null;
 
-//=========================================================//
+const context = canvas.getContext('2d')!;
+if (!context) {
+    throw new Error('Unable to get 2D context');
+}
+//=======================================================//
 
-
-// Event listeners for drawing
 canvas.addEventListener('mousedown', startDrawing);
 canvas.addEventListener('mousemove', draw);
 canvas.addEventListener('mouseup', stopDrawing);
 canvas.addEventListener('mouseout', stopDrawing);
+canvas.addEventListener('mousemove', moveTool);
 
-//=========================================================//
+//=======================================================//
 
 function startDrawing(event: MouseEvent) {
     isDrawing = true;
     const { offsetX, offsetY } = getMousePosition(event);
     currentLine = new MarkerLine(offsetX, offsetY, currentThickness);
     points.push(currentLine);
+    toolPreview = null;
 }
 
 function draw(event: MouseEvent) {
@@ -95,6 +96,17 @@ function stopDrawing() {
     }
 }
 
+function moveTool(event: MouseEvent) {
+    if (isDrawing) return;
+    const { offsetX, offsetY } = getMousePosition(event);
+    if (!toolPreview) {
+        toolPreview = new ToolPreview(offsetX, offsetY, currentThickness);
+    } else {
+        toolPreview.updatePosition(offsetX, offsetY);
+    }
+    canvas.dispatchEvent(new Event('tool-moved'));
+}
+
 function getMousePosition(event: MouseEvent) {
     const rect = canvas.getBoundingClientRect();
     return {
@@ -103,9 +115,22 @@ function getMousePosition(event: MouseEvent) {
     };
 }
 
+//=======================================================//
+
 canvas.addEventListener('drawing-changed', () => {
     context.clearRect(0, 0, canvas.width, canvas.height);
     points.forEach(line => line.display(context));
+    if (toolPreview) {
+        toolPreview.draw(context);
+    }
+});
+
+canvas.addEventListener('tool-moved', () => {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    points.forEach(line => line.display(context));
+    if (toolPreview) {
+        toolPreview.draw(context);
+    }
 });
 
 clearButton.addEventListener('click', () => {
@@ -135,7 +160,6 @@ redoButton.addEventListener('click', () => {
     }
 });
 
-// Tool buttons event listeners
 thinButton.addEventListener('click', () => {
     currentThickness = 1;
     thinButton.classList.add('selectedTool');
@@ -148,7 +172,7 @@ thickButton.addEventListener('click', () => {
     thinButton.classList.remove('selectedTool');
 });
 
-//=========================================================//
+//=======================================================//
 
 class MarkerLine {
     private points: { x: number, y: number }[] = [];
@@ -172,5 +196,29 @@ class MarkerLine {
         }
         context.lineWidth = this.thickness;
         context.stroke();
+    }
+}
+
+class ToolPreview {
+    private x: number;
+    private y: number;
+    private thickness: number;
+
+    constructor(x: number, y: number, thickness: number) {
+        this.x = x;
+        this.y = y;
+        this.thickness = thickness;
+    }
+
+    updatePosition(x: number, y: number) {
+        this.x = x;
+        this.y = y;
+    }
+
+    draw(context: CanvasRenderingContext2D) {
+        context.beginPath();
+        context.arc(this.x, this.y, this.thickness / 2, 0, Math.PI * 2);
+        context.fillStyle = 'rgba(0, 0, 0, 180)';
+        context.fill();
     }
 }
