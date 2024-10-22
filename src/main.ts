@@ -48,6 +48,8 @@ const exportButton = document.createElement('button');
 exportButton.innerText = 'Export';
 exportButton.id = 'exportButton';
 
+//========================================================//
+
 buttonContainer.appendChild(clearButton);
 buttonContainer.appendChild(undoButton);
 buttonContainer.appendChild(redoButton);
@@ -56,7 +58,8 @@ buttonContainer.appendChild(thickButton);
 buttonContainer.appendChild(customStickerButton);
 buttonContainer.appendChild(exportButton);
 
-// Create button for cyclist sticker with rotation
+//========================================================//
+
 const cyclistButton = document.createElement('button');
 cyclistButton.innerText = '🚴';
 cyclistButton.id = 'sticker1Button';
@@ -69,7 +72,6 @@ cyclistButton.addEventListener('click', () => {
     canvas.dispatchEvent(new Event('tool-moved'));
 });
 
-// Create button for noodles sticker without rotation
 const noodlesButton = document.createElement('button');
 noodlesButton.innerText = '🍜';
 noodlesButton.id = 'sticker2Button';
@@ -82,7 +84,6 @@ noodlesButton.addEventListener('click', () => {
     canvas.dispatchEvent(new Event('tool-moved'));
 });
 
-// Create button for steak sticker without rotation
 const steakButton = document.createElement('button');
 steakButton.innerText = '🥩';
 steakButton.id = 'sticker3Button';
@@ -95,6 +96,8 @@ steakButton.addEventListener('click', () => {
     canvas.dispatchEvent(new Event('tool-moved'));
 });
 
+//=========================================================//
+
 container.appendChild(canvas);
 container.appendChild(buttonContainer);
 document.body.appendChild(container);
@@ -103,9 +106,9 @@ let isDrawing = false;
 let points: (MarkerLine | Sticker)[] = [];
 let currentLine: MarkerLine | null = null;
 let redoStack: (MarkerLine | Sticker)[] = [];
-let currentThickness = 1; // Default thickness
-let currentColor = '#000000'; // Default color
-let currentRotation = 0; // Default rotation
+let currentThickness = 1; 
+let currentColor = '#000000'; 
+let currentRotation = 0; 
 let toolPreview: ToolPreview | StickerPreview | null = null;
 let currentSticker: string | null = null;
 
@@ -114,25 +117,26 @@ if (!context) {
     throw new Error('Unable to get 2D context');
 }
 
-// Event listeners for drawing
 canvas.addEventListener('mousedown', startDrawing);
 canvas.addEventListener('mousemove', draw);
 canvas.addEventListener('mouseup', stopDrawing);
 canvas.addEventListener('mouseout', stopDrawing);
 canvas.addEventListener('mousemove', moveTool);
 
+//=========================================================//
+
 function startDrawing(event: MouseEvent) {
     const { offsetX, offsetY } = getMousePosition(event);
     if (currentSticker) {
         const sticker = new Sticker(offsetX, offsetY, currentSticker, currentRotation);
         points.push(sticker);
-        toolPreview = null; // Hide tool preview when placing a sticker
+        toolPreview = null; 
         canvas.dispatchEvent(new Event('drawing-changed'));
     } else {
         isDrawing = true;
         currentLine = new MarkerLine(offsetX, offsetY, currentThickness, currentColor);
         points.push(currentLine);
-        toolPreview = null; // Hide tool preview when drawing
+        toolPreview = null; 
     }
 }
 
@@ -198,7 +202,6 @@ canvas.addEventListener('tool-moved', () => {
     }
 });
 
-// Clear button event listener
 clearButton.addEventListener('click', () => {
     points = [];
     redoStack = [];
@@ -206,7 +209,6 @@ clearButton.addEventListener('click', () => {
     canvas.dispatchEvent(new Event('drawing-changed'));
 });
 
-// Undo button event listener
 undoButton.addEventListener('click', () => {
     if (points.length > 0) {
         const lastItem = points.pop();
@@ -217,7 +219,6 @@ undoButton.addEventListener('click', () => {
     }
 });
 
-// Redo button event listener
 redoButton.addEventListener('click', () => {
     if (redoStack.length > 0) {
         const lastItem = redoStack.pop();
@@ -228,65 +229,53 @@ redoButton.addEventListener('click', () => {
     }
 });
 
-// Tool buttons event listeners
 thinButton.addEventListener('click', () => {
     currentThickness = 1;
-    currentSticker = null; // Disable sticker mode
+    currentSticker = null;
     updateSelectedTool(thinButton);
     canvas.dispatchEvent(new Event('tool-moved'));
 });
 
 thickButton.addEventListener('click', () => {
     currentThickness = 5;
-    currentSticker = null; // Disable sticker mode
+    currentSticker = null; 
     updateSelectedTool(thickButton);
     canvas.dispatchEvent(new Event('tool-moved'));
 });
 
-// Custom sticker button event listener
 customStickerButton.addEventListener('click', () => {
     const customSticker = prompt('Enter your custom sticker:', '⭐');
     if (customSticker) {
         const button = document.createElement('button');
         button.innerText = customSticker;
-        button.id = `sticker${Date.now()}`; // Unique ID
+        button.id = `sticker${Date.now()}`;
         buttonContainer.appendChild(button);
         button.addEventListener('click', () => {
             currentSticker = customSticker;
-            currentRotation = 0; // No rotation for custom stickers
-            toolPreview = null; // Reset tool preview
+            currentRotation = 0;
+            toolPreview = null; 
             updateSelectedTool(button);
             canvas.dispatchEvent(new Event('tool-moved'));
         });
     }
 });
 
-// Define the color picker element
 const colorPicker = document.createElement('input');
 colorPicker.type = 'color';
 colorPicker.id = 'colorPicker';
 buttonContainer.appendChild(colorPicker);
 
-// Color picker event listener
 colorPicker.addEventListener('input', (event) => {
     currentColor = (event.target as HTMLInputElement).value;
 });
 
-// Export button event listener
 exportButton.addEventListener('click', () => {
-    // Create a new canvas of size 1024x1024
     const exportCanvas = document.createElement('canvas');
     exportCanvas.width = 1024;
     exportCanvas.height = 1024;
     const exportContext = exportCanvas.getContext('2d')!;
-    
-    // Scale the context to fit the larger canvas
     exportContext.scale(2, 2);
-    
-    // Execute all items on the display list against the new context
     points.forEach(item => item.display(exportContext));
-    
-    // Trigger a file download with the contents of the canvas as a PNG file
     exportCanvas.toBlob(blob => {
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob!);
@@ -294,6 +283,8 @@ exportButton.addEventListener('click', () => {
         link.click();
     });
 });
+
+//=========================================================//
 
 function updateSelectedTool(selectedButton: HTMLButtonElement) {
     const allButtons = buttonContainer.querySelectorAll('button');
