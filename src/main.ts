@@ -48,10 +48,7 @@ const exportButton = document.createElement('button');
 exportButton.innerText = 'Export';
 exportButton.id = 'exportButton';
 
-const colorPicker = document.createElement('input');
-colorPicker.type = 'color';
-colorPicker.id = 'colorPicker';
-colorPicker.value = '#000000';
+//=========================================================//
 
 buttonContainer.appendChild(clearButton);
 buttonContainer.appendChild(undoButton);
@@ -60,12 +57,11 @@ buttonContainer.appendChild(thinButton);
 buttonContainer.appendChild(thickButton);
 buttonContainer.appendChild(customStickerButton);
 buttonContainer.appendChild(exportButton);
-buttonContainer.appendChild(colorPicker);
 
 const stickers = [
-    { emoji: '🚴', id: 'sticker1Button' },
-    { emoji: '🍜', id: 'sticker2Button' },
-    { emoji: '🥩', id: 'sticker3Button' }
+    { emoji: '🚴', id: 'sticker1Button', rotate: true },
+    { emoji: '🍜', id: 'sticker2Button', rotate: false },
+    { emoji: '🥩', id: 'sticker3Button', rotate: false }
 ];
 
 stickers.forEach(sticker => {
@@ -75,11 +71,18 @@ stickers.forEach(sticker => {
     buttonContainer.appendChild(button);
     button.addEventListener('click', () => {
         currentSticker = sticker.emoji;
+        if (sticker.rotate) {
+            randomizeRotation();
+        } else {
+            currentRotation = 0; 
+        }
         toolPreview = null; 
         updateSelectedTool(button);
         canvas.dispatchEvent(new Event('tool-moved'));
     });
 });
+
+//=========================================================//
 
 container.appendChild(canvas);
 container.appendChild(buttonContainer);
@@ -91,8 +94,8 @@ let currentLine: MarkerLine | null = null;
 let redoStack: (MarkerLine | Sticker)[] = [];
 let currentThickness = 1; 
 let currentColor = '#000000'; 
+let currentRotation = 0; 
 let toolPreview: ToolPreview | StickerPreview | null = null;
-let previewColor = 'black'; 
 let currentSticker: string | null = null;
 
 const context = canvas.getContext('2d')!;
@@ -100,19 +103,20 @@ if (!context) {
     throw new Error('Unable to get 2D context');
 }
 
-// Event listeners for drawing
 canvas.addEventListener('mousedown', startDrawing);
 canvas.addEventListener('mousemove', draw);
 canvas.addEventListener('mouseup', stopDrawing);
 canvas.addEventListener('mouseout', stopDrawing);
 canvas.addEventListener('mousemove', moveTool);
 
+//=========================================================//
+
 function startDrawing(event: MouseEvent) {
     const { offsetX, offsetY } = getMousePosition(event);
     if (currentSticker) {
-        const sticker = new Sticker(offsetX, offsetY, currentSticker);
+        const sticker = new Sticker(offsetX, offsetY, currentSticker, currentRotation);
         points.push(sticker);
-        toolPreview = null; 
+        toolPreview = null;
         canvas.dispatchEvent(new Event('drawing-changed'));
     } else {
         isDrawing = true;
@@ -142,13 +146,13 @@ function moveTool(event: MouseEvent) {
     const { offsetX, offsetY } = getMousePosition(event);
     if (currentSticker) {
         if (!toolPreview || !(toolPreview instanceof StickerPreview)) {
-            toolPreview = new StickerPreview(offsetX, offsetY, currentSticker);
+            toolPreview = new StickerPreview(offsetX, offsetY, currentSticker, currentRotation);
         } else {
             toolPreview.updatePosition(offsetX, offsetY);
         }
     } else {
         if (!toolPreview || !(toolPreview instanceof ToolPreview)) {
-            toolPreview = new ToolPreview(offsetX, offsetY, currentThickness, previewColor);
+            toolPreview = new ToolPreview(offsetX, offsetY, currentThickness, currentColor);
         } else {
             toolPreview.updatePosition(offsetX, offsetY);
         }
@@ -166,6 +170,8 @@ function getMousePosition(event: MouseEvent) {
     };
 }
 
+//=========================================================//
+
 canvas.addEventListener('drawing-changed', () => {
     context.clearRect(0, 0, canvas.width, canvas.height);
     points.forEach(item => item.display(context));
@@ -182,7 +188,6 @@ canvas.addEventListener('tool-moved', () => {
     }
 });
 
-// Clear button event listener
 clearButton.addEventListener('click', () => {
     points = [];
     redoStack = [];
@@ -190,7 +195,6 @@ clearButton.addEventListener('click', () => {
     canvas.dispatchEvent(new Event('drawing-changed'));
 });
 
-// Undo button event listener
 undoButton.addEventListener('click', () => {
     if (points.length > 0) {
         const lastItem = points.pop();
@@ -211,26 +215,25 @@ redoButton.addEventListener('click', () => {
     }
 });
 
-
 thinButton.addEventListener('click', () => {
     currentThickness = 1;
-    previewColor = 'black'; 
     currentSticker = null; 
     updateSelectedTool(thinButton);
+    canvas.dispatchEvent(new Event('tool-moved'));
 });
 
 thickButton.addEventListener('click', () => {
     currentThickness = 5;
-    previewColor = 'gray'; 
     currentSticker = null; 
     updateSelectedTool(thickButton);
+    canvas.dispatchEvent(new Event('tool-moved'));
 });
 
 
 customStickerButton.addEventListener('click', () => {
     const customSticker = prompt('Enter your custom sticker:', '⭐');
     if (customSticker) {
-        const customStickerObj = { emoji: customSticker, id: `sticker${stickers.length + 1}Button` };
+        const customStickerObj = { emoji: customSticker, id: `sticker${stickers.length + 1}Button`, rotate: false };
         stickers.push(customStickerObj);
         const button = document.createElement('button');
         button.innerText = customSticker;
@@ -238,6 +241,7 @@ customStickerButton.addEventListener('click', () => {
         buttonContainer.appendChild(button);
         button.addEventListener('click', () => {
             currentSticker = customSticker;
+            currentRotation = 0;
             toolPreview = null; 
             updateSelectedTool(button);
             canvas.dispatchEvent(new Event('tool-moved'));
@@ -245,22 +249,22 @@ customStickerButton.addEventListener('click', () => {
     }
 });
 
+const colorPicker = document.createElement('input');
+colorPicker.type = 'color';
+colorPicker.id = 'colorPicker';
+buttonContainer.appendChild(colorPicker);
 
 colorPicker.addEventListener('input', (event) => {
     currentColor = (event.target as HTMLInputElement).value;
 });
-
 
 exportButton.addEventListener('click', () => {
     const exportCanvas = document.createElement('canvas');
     exportCanvas.width = 1024;
     exportCanvas.height = 1024;
     const exportContext = exportCanvas.getContext('2d')!;
-
     exportContext.scale(2, 2);
-    
     points.forEach(item => item.display(exportContext));
-    
     exportCanvas.toBlob(blob => {
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob!);
@@ -274,6 +278,12 @@ function updateSelectedTool(selectedButton: HTMLButtonElement) {
     allButtons.forEach(button => button.classList.remove('selectedTool'));
     selectedButton.classList.add('selectedTool');
 }
+
+function randomizeRotation() {
+    currentRotation = Math.floor(Math.random() * 360);
+}
+
+//=========================================================//
 
 class MarkerLine {
     private points: { x: number, y: number }[] = [];
@@ -333,16 +343,22 @@ class Sticker {
     private x: number;
     private y: number;
     private emoji: string;
+    private rotation: number;
 
-    constructor(x: number, y: number, emoji: string) {
+    constructor(x: number, y: number, emoji: string, rotation: number) {
         this.x = x;
         this.y = y;
         this.emoji = emoji;
+        this.rotation = rotation;
     }
 
     display(context: CanvasRenderingContext2D) {
+        context.save();
+        context.translate(this.x, this.y);
+        context.rotate(this.rotation * Math.PI / 180);
         context.font = '24px serif';
-        context.fillText(this.emoji, this.x, this.y);
+        context.fillText(this.emoji, 0, 0);
+        context.restore();
     }
 }
 
@@ -350,11 +366,13 @@ class StickerPreview {
     private x: number;
     private y: number;
     private emoji: string;
+    private rotation: number;
 
-    constructor(x: number, y: number, emoji: string) {
+    constructor(x: number, y: number, emoji: string, rotation: number) {
         this.x = x;
         this.y = y;
         this.emoji = emoji;
+        this.rotation = rotation;
     }
 
     updatePosition(x: number, y: number) {
@@ -363,7 +381,11 @@ class StickerPreview {
     }
 
     draw(context: CanvasRenderingContext2D) {
+        context.save();
+        context.translate(this.x, this.y);
+        context.rotate(this.rotation * Math.PI / 180);
         context.font = '24px serif';
-        context.fillText(this.emoji, this.x, this.y);
+        context.fillText(this.emoji, 0, 0);
+        context.restore();
     }
 }
