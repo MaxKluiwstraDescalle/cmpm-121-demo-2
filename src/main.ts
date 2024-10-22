@@ -38,30 +38,43 @@ const thickButton = document.createElement('button');
 thickButton.innerText = 'Thick';
 thickButton.id = 'thickButton';
 
-const sticker1Button = document.createElement('button');
-sticker1Button.innerText = '🚴'; // Cycling emoji
-sticker1Button.id = 'sticker1Button';
+const customStickerButton = document.createElement('button');
+customStickerButton.innerText = 'Custom Sticker';
+customStickerButton.id = 'customStickerButton';
 
-const sticker2Button = document.createElement('button');
-sticker2Button.innerText = '🍜'; // Noodles emoji
-sticker2Button.id = 'sticker2Button';
-
-const sticker3Button = document.createElement('button');
-sticker3Button.innerText = '🥩'; // Steak emoji
-sticker3Button.id = 'sticker3Button';
+//==============================================================================//
 
 buttonContainer.appendChild(clearButton);
 buttonContainer.appendChild(undoButton);
 buttonContainer.appendChild(redoButton);
 buttonContainer.appendChild(thinButton);
 buttonContainer.appendChild(thickButton);
-buttonContainer.appendChild(sticker1Button);
-buttonContainer.appendChild(sticker2Button);
-buttonContainer.appendChild(sticker3Button);
+buttonContainer.appendChild(customStickerButton);
+
+const stickers = [
+    { emoji: '🚴', id: 'sticker1Button' },
+    { emoji: '🍜', id: 'sticker2Button' },
+    { emoji: '🥩', id: 'sticker3Button' }
+];
+
+stickers.forEach(sticker => {
+    const button = document.createElement('button');
+    button.innerText = sticker.emoji;
+    button.id = sticker.id;
+    buttonContainer.appendChild(button);
+    button.addEventListener('click', () => {
+        currentSticker = sticker.emoji;
+        toolPreview = null; // Reset tool preview
+        updateSelectedTool(button);
+        canvas.dispatchEvent(new Event('tool-moved'));
+    });
+});
 
 container.appendChild(canvas);
 container.appendChild(buttonContainer);
 document.body.appendChild(container);
+
+//==============================================================================//
 
 let isDrawing = false;
 let points: (MarkerLine | Sticker)[] = [];
@@ -76,13 +89,15 @@ const context = canvas.getContext('2d')!;
 if (!context) {
     throw new Error('Unable to get 2D context');
 }
+//==============================================================================//
 
-// Event listeners for drawing
 canvas.addEventListener('mousedown', startDrawing);
 canvas.addEventListener('mousemove', draw);
 canvas.addEventListener('mouseup', stopDrawing);
 canvas.addEventListener('mouseout', stopDrawing);
 canvas.addEventListener('mousemove', moveTool);
+
+//==============================================================================//
 
 function startDrawing(event: MouseEvent) {
     const { offsetX, offsetY } = getMousePosition(event);
@@ -141,7 +156,8 @@ function getMousePosition(event: MouseEvent) {
     };
 }
 
-// Observer for "drawing-changed" and "tool-moved" events
+//==============================================================================//
+
 canvas.addEventListener('drawing-changed', () => {
     context.clearRect(0, 0, canvas.width, canvas.height);
     points.forEach(item => item.display(context));
@@ -158,7 +174,6 @@ canvas.addEventListener('tool-moved', () => {
     }
 });
 
-// Clear button event listener
 clearButton.addEventListener('click', () => {
     points = [];
     redoStack = [];
@@ -166,7 +181,6 @@ clearButton.addEventListener('click', () => {
     canvas.dispatchEvent(new Event('drawing-changed'));
 });
 
-// Undo button event listener
 undoButton.addEventListener('click', () => {
     if (points.length > 0) {
         const lastItem = points.pop();
@@ -177,7 +191,6 @@ undoButton.addEventListener('click', () => {
     }
 });
 
-// Redo button event listener
 redoButton.addEventListener('click', () => {
     if (redoStack.length > 0) {
         const lastItem = redoStack.pop();
@@ -188,62 +201,45 @@ redoButton.addEventListener('click', () => {
     }
 });
 
-// Tool buttons event listeners
 thinButton.addEventListener('click', () => {
     currentThickness = 1;
-    previewColor = 'black'; // Darker color for thin preview
-    currentSticker = null; // Disable sticker mode
-    thinButton.classList.add('selectedTool');
-    thickButton.classList.remove('selectedTool');
-    sticker1Button.classList.remove('selectedTool');
-    sticker2Button.classList.remove('selectedTool');
-    sticker3Button.classList.remove('selectedTool');
+    previewColor = 'black'; 
+    currentSticker = null; 
+    updateSelectedTool(thinButton);
 });
 
 thickButton.addEventListener('click', () => {
     currentThickness = 5;
-    previewColor = 'gray'; // Lighter color for thick preview
-    currentSticker = null; // Disable sticker mode
-    thickButton.classList.add('selectedTool');
-    thinButton.classList.remove('selectedTool');
-    sticker1Button.classList.remove('selectedTool');
-    sticker2Button.classList.remove('selectedTool');
-    sticker3Button.classList.remove('selectedTool');
+    previewColor = 'gray';
+    currentSticker = null; 
+    updateSelectedTool(thickButton);
 });
 
-// Sticker buttons event listeners
-sticker1Button.addEventListener('click', () => {
-    currentSticker = '🚴'; // Cycling emoji
-    toolPreview = null; // Reset tool preview
-    sticker1Button.classList.add('selectedTool');
-    sticker2Button.classList.remove('selectedTool');
-    sticker3Button.classList.remove('selectedTool');
-    thinButton.classList.remove('selectedTool');
-    thickButton.classList.remove('selectedTool');
-    canvas.dispatchEvent(new Event('tool-moved'));
+customStickerButton.addEventListener('click', () => {
+    const customSticker = prompt('Enter your custom sticker:', '⭐');
+    if (customSticker) {
+        const customStickerObj = { emoji: customSticker, id: `sticker${stickers.length + 1}Button` };
+        stickers.push(customStickerObj);
+        const button = document.createElement('button');
+        button.innerText = customSticker;
+        button.id = customStickerObj.id;
+        buttonContainer.appendChild(button);
+        button.addEventListener('click', () => {
+            currentSticker = customSticker;
+            toolPreview = null;
+            updateSelectedTool(button);
+            canvas.dispatchEvent(new Event('tool-moved'));
+        });
+    }
 });
 
-sticker2Button.addEventListener('click', () => {
-    currentSticker = '🍜'; // Noodles emoji
-    toolPreview = null; // Reset tool preview
-    sticker2Button.classList.add('selectedTool');
-    sticker1Button.classList.remove('selectedTool');
-    sticker3Button.classList.remove('selectedTool');
-    thinButton.classList.remove('selectedTool');
-    thickButton.classList.remove('selectedTool');
-    canvas.dispatchEvent(new Event('tool-moved'));
-});
+function updateSelectedTool(selectedButton: HTMLButtonElement) {
+    const allButtons = buttonContainer.querySelectorAll('button');
+    allButtons.forEach(button => button.classList.remove('selectedTool'));
+    selectedButton.classList.add('selectedTool');
+}
 
-sticker3Button.addEventListener('click', () => {
-    currentSticker = '🥩'; // Steak emoji
-    toolPreview = null; // Reset tool preview
-    sticker3Button.classList.add('selectedTool');
-    sticker1Button.classList.remove('selectedTool');
-    sticker2Button.classList.remove('selectedTool');
-    thinButton.classList.remove('selectedTool');
-    thickButton.classList.remove('selectedTool');
-    canvas.dispatchEvent(new Event('tool-moved'));
-});
+//==============================================================================//
 
 class MarkerLine {
     private points: { x: number, y: number }[] = [];
