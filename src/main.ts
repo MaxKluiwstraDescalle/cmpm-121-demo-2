@@ -14,6 +14,8 @@ container.id = 'canvasContainer';
 
 const canvas = document.createElement("canvas");
 canvas.id = 'drawingCanvas';
+canvas.width = 512;
+canvas.height = 512;
 
 const buttonContainer = document.createElement('div');
 buttonContainer.id = 'buttonContainer';
@@ -46,8 +48,6 @@ const exportButton = document.createElement('button');
 exportButton.innerText = 'Export';
 exportButton.id = 'exportButton';
 
-//==============================================================================//
-
 buttonContainer.appendChild(clearButton);
 buttonContainer.appendChild(undoButton);
 buttonContainer.appendChild(redoButton);
@@ -75,8 +75,6 @@ stickers.forEach(sticker => {
     });
 });
 
-//==============================================================================//
-
 container.appendChild(canvas);
 container.appendChild(buttonContainer);
 document.body.appendChild(container);
@@ -100,8 +98,6 @@ canvas.addEventListener('mousemove', draw);
 canvas.addEventListener('mouseup', stopDrawing);
 canvas.addEventListener('mouseout', stopDrawing);
 canvas.addEventListener('mousemove', moveTool);
-
-//==============================================================================//
 
 function startDrawing(event: MouseEvent) {
     const { offsetX, offsetY } = getMousePosition(event);
@@ -154,9 +150,11 @@ function moveTool(event: MouseEvent) {
 
 function getMousePosition(event: MouseEvent) {
     const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
     return {
-        offsetX: event.clientX - rect.left,
-        offsetY: event.clientY - rect.top
+        offsetX: (event.clientX - rect.left) * scaleX,
+        offsetY: (event.clientY - rect.top) * scaleY
     };
 }
 
@@ -167,8 +165,6 @@ canvas.addEventListener('drawing-changed', () => {
         toolPreview.draw(context);
     }
 });
-
-//==============================================================================//
 
 canvas.addEventListener('tool-moved', () => {
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -237,14 +233,13 @@ customStickerButton.addEventListener('click', () => {
     }
 });
 
-
 exportButton.addEventListener('click', () => {
     const exportCanvas = document.createElement('canvas');
     exportCanvas.width = 1024;
     exportCanvas.height = 1024;
     const exportContext = exportCanvas.getContext('2d')!;
 
-    exportContext.scale(4, 4);
+    exportContext.scale(2, 2);
 
     points.forEach(item => item.display(exportContext));
     
@@ -261,8 +256,6 @@ function updateSelectedTool(selectedButton: HTMLButtonElement) {
     allButtons.forEach(button => button.classList.remove('selectedTool'));
     selectedButton.classList.add('selectedTool');
 }
-
-//==============================================================================//
 
 class MarkerLine {
     private points: { x: number, y: number }[] = [];

@@ -75,7 +75,7 @@ button {
   border-radius: 8px;
   border: 1px solid transparent;
   padding: 5px 10px;
-  font-size: 24px; /* Set font size for emoji */
+  font-size: 16px; /* Adjust font size for smaller emojis */
   font-weight: 500;
   font-family: inherit;
   background-color: #1a1a1a;
@@ -113,8 +113,8 @@ html, body {
 }
 #drawingCanvas{
   border: 3px solid black;
-  width: 256px;
-  height: 256px;
+  width: 512px; /* Adjust canvas width */
+  height: 512px; /* Adjust canvas height */
   display: block;
   background-color: white;
   border-radius: 15px; 
