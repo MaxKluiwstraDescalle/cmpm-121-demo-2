@@ -46,6 +46,8 @@ const exportButton = document.createElement('button');
 exportButton.innerText = 'Export';
 exportButton.id = 'exportButton';
 
+//==============================================================================//
+
 buttonContainer.appendChild(clearButton);
 buttonContainer.appendChild(undoButton);
 buttonContainer.appendChild(redoButton);
@@ -67,11 +69,13 @@ stickers.forEach(sticker => {
     buttonContainer.appendChild(button);
     button.addEventListener('click', () => {
         currentSticker = sticker.emoji;
-        toolPreview = null; // Reset tool preview
+        toolPreview = null; 
         updateSelectedTool(button);
         canvas.dispatchEvent(new Event('tool-moved'));
     });
 });
+
+//==============================================================================//
 
 container.appendChild(canvas);
 container.appendChild(buttonContainer);
@@ -81,9 +85,9 @@ let isDrawing = false;
 let points: (MarkerLine | Sticker)[] = [];
 let currentLine: MarkerLine | null = null;
 let redoStack: (MarkerLine | Sticker)[] = [];
-let currentThickness = 1; // Default thickness
+let currentThickness = 1; 
 let toolPreview: ToolPreview | StickerPreview | null = null;
-let previewColor = 'black'; // Default color for thin preview
+let previewColor = 'black'; 
 let currentSticker: string | null = null;
 
 const context = canvas.getContext('2d')!;
@@ -91,25 +95,26 @@ if (!context) {
     throw new Error('Unable to get 2D context');
 }
 
-// Event listeners for drawing
 canvas.addEventListener('mousedown', startDrawing);
 canvas.addEventListener('mousemove', draw);
 canvas.addEventListener('mouseup', stopDrawing);
 canvas.addEventListener('mouseout', stopDrawing);
 canvas.addEventListener('mousemove', moveTool);
 
+//==============================================================================//
+
 function startDrawing(event: MouseEvent) {
     const { offsetX, offsetY } = getMousePosition(event);
     if (currentSticker) {
         const sticker = new Sticker(offsetX, offsetY, currentSticker);
         points.push(sticker);
-        toolPreview = null; // Hide tool preview when placing a sticker
+        toolPreview = null; 
         canvas.dispatchEvent(new Event('drawing-changed'));
     } else {
         isDrawing = true;
         currentLine = new MarkerLine(offsetX, offsetY, currentThickness);
         points.push(currentLine);
-        toolPreview = null; // Hide tool preview when drawing
+        toolPreview = null; 
     }
 }
 
@@ -155,7 +160,6 @@ function getMousePosition(event: MouseEvent) {
     };
 }
 
-// Observer for "drawing-changed" and "tool-moved" events
 canvas.addEventListener('drawing-changed', () => {
     context.clearRect(0, 0, canvas.width, canvas.height);
     points.forEach(item => item.display(context));
@@ -163,6 +167,8 @@ canvas.addEventListener('drawing-changed', () => {
         toolPreview.draw(context);
     }
 });
+
+//==============================================================================//
 
 canvas.addEventListener('tool-moved', () => {
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -172,7 +178,6 @@ canvas.addEventListener('tool-moved', () => {
     }
 });
 
-// Clear button event listener
 clearButton.addEventListener('click', () => {
     points = [];
     redoStack = [];
@@ -180,7 +185,6 @@ clearButton.addEventListener('click', () => {
     canvas.dispatchEvent(new Event('drawing-changed'));
 });
 
-// Undo button event listener
 undoButton.addEventListener('click', () => {
     if (points.length > 0) {
         const lastItem = points.pop();
@@ -201,22 +205,20 @@ redoButton.addEventListener('click', () => {
     }
 });
 
-// Tool buttons event listeners
 thinButton.addEventListener('click', () => {
     currentThickness = 1;
-    previewColor = 'black'; // Darker color for thin preview
-    currentSticker = null; // Disable sticker mode
+    previewColor = 'black'; 
+    currentSticker = null;
     updateSelectedTool(thinButton);
 });
 
 thickButton.addEventListener('click', () => {
     currentThickness = 5;
-    previewColor = 'gray'; // Lighter color for thick preview
-    currentSticker = null; // Disable sticker mode
+    previewColor = 'gray';
+    currentSticker = null;
     updateSelectedTool(thickButton);
 });
 
-// Custom sticker button event listener
 customStickerButton.addEventListener('click', () => {
     const customSticker = prompt('Enter your custom sticker:', '⭐');
     if (customSticker) {
@@ -228,28 +230,24 @@ customStickerButton.addEventListener('click', () => {
         buttonContainer.appendChild(button);
         button.addEventListener('click', () => {
             currentSticker = customSticker;
-            toolPreview = null; // Reset tool preview
+            toolPreview = null; 
             updateSelectedTool(button);
             canvas.dispatchEvent(new Event('tool-moved'));
         });
     }
 });
 
-// Export button event listener
+
 exportButton.addEventListener('click', () => {
-    // Create a new canvas of size 1024x1024
     const exportCanvas = document.createElement('canvas');
     exportCanvas.width = 1024;
     exportCanvas.height = 1024;
     const exportContext = exportCanvas.getContext('2d')!;
-    
-    // Scale the context to fit the larger canvas
+
     exportContext.scale(4, 4);
-    
-    // Execute all items on the display list against the new context
+
     points.forEach(item => item.display(exportContext));
     
-    // Trigger a file download with the contents of the canvas as a PNG file
     exportCanvas.toBlob(blob => {
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob!);
