@@ -60,41 +60,23 @@ buttonContainer.appendChild(exportButton);
 
 //========================================================//
 
-const cyclistButton = document.createElement('button');
-cyclistButton.innerText = '🚴';
-cyclistButton.id = 'sticker1Button';
-buttonContainer.appendChild(cyclistButton);
-cyclistButton.addEventListener('click', () => {
-    currentSticker = '🚴';
-    randomizeRotation();
-    toolPreview = null; 
-    updateSelectedTool(cyclistButton);
-    canvas.dispatchEvent(new Event('tool-moved'));
-});
+function createStickerButton(emoji: string, container: HTMLElement) {
+    const button = document.createElement('button');
+    button.innerText = emoji;
+    button.id = `sticker${emoji}Button`;
+    button.addEventListener('click', () => {
+        currentSticker = emoji;
+        randomizeRotation();
+        toolPreview = null;
+        updateSelectedTool(button);
+        canvas.dispatchEvent(new Event('tool-moved'));
+    });
+    container.appendChild(button);
+}
 
-const noodlesButton = document.createElement('button');
-noodlesButton.innerText = '🍜';
-noodlesButton.id = 'sticker2Button';
-buttonContainer.appendChild(noodlesButton);
-noodlesButton.addEventListener('click', () => {
-    currentSticker = '🍜';
-    currentRotation = 0; 
-    toolPreview = null; 
-    updateSelectedTool(noodlesButton);
-    canvas.dispatchEvent(new Event('tool-moved'));
-});
-
-const steakButton = document.createElement('button');
-steakButton.innerText = '🥩';
-steakButton.id = 'sticker3Button';
-buttonContainer.appendChild(steakButton);
-steakButton.addEventListener('click', () => {
-    currentSticker = '🥩';
-    currentRotation = 0; 
-    toolPreview = null; 
-    updateSelectedTool(steakButton);
-    canvas.dispatchEvent(new Event('tool-moved'));
-});
+createStickerButton('🚴', buttonContainer);
+createStickerButton('🍜', buttonContainer);
+createStickerButton('🥩', buttonContainer);
 
 //=========================================================//
 
